@@ -8,17 +8,12 @@
 	<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 	<base href="/">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" />
-	<style>#str-dlls { display: none }</style>
 </head>
 <body>
 	<my-app>
 		Loading...
 	</my-app>
 	<script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=console.*,Intl.~locale.en&gated=1"></script>
-	<div id="str-dlls">
-		<%= '<' %>script src="/polyfill.dll.js"<%= '>' %><%= '<' %>/script<%= '>' %>
-		<%= '<' %>script src="/vendor.dll.js"<%= '>' %><%= '<' %>/script<%= '>' %>
-	</div>
 	<script src="/index.js"></script>
 </body>
 </html>

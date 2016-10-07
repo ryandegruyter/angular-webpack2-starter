@@ -1,8 +1,7 @@
 "use strict";
 const root = require('./helpers.js').root
-const ip = require('ip');
 
-exports.HOST = ip.address();
+exports.HOST = 'localhost';
 exports.DEV_PORT = 3000;
 exports.E2E_PORT = 4201;
 exports.PROD_PORT = 8088;
@@ -46,12 +45,6 @@ exports.MY_COPY_FOLDERS = [
   // use this for folders you want to be copied in to Client dist
   // src/assets and index.html are already copied by default.
   // format is { from: 'folder_name', to: 'folder_name' }
-]
-
-exports.MY_VENDOR_DLLS = [
-  // list vendors that you want to be included in your dlls files
-  // this will speed up initial dev server build and incremental builds.
-  // Be sure to run `npm run build:dll` if you make changes to this array.
 ]
 
 exports.MY_CLIENT_PLUGINS = [

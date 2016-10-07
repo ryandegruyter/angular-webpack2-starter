@@ -1,11 +1,11 @@
 # Complete starter seed project for Angular 2
 
-## Minimal Branch
+## Bare Minimum Branch
 
-> Featuring Webpack 2 (and Webpack DLL plugin for faster dev builds). Supports Lazy Loading and AOT compilation.
+> Featuring Webpack 2. Supports Lazy Loading and AOT compilation.
 
 ```bash
-git clone -b minimal https://github.com/qdouble/angular2webpack2-starter.git
+git clone -b bare-minimum https://github.com/qdouble/angular2webpack2-starter.git
 cd angular2webpack2-starter
 npm install
 npm start
@@ -24,11 +24,8 @@ https://github.com/qdouble/angular2webpack2-starter/tree/no-universal-support
   * Treeshaking
   * AOT (Ahead of Time/ Offline) Compilation
 * Webpack 2
-  * Webpack Dlls (Speeds up devServer builds)
 * TypeScript 2
   * @types
-* Karma/Jasmine testing
-* Protractor for E2E testing
 
 ## Project Goals
 
@@ -61,12 +58,6 @@ The following are some things that will make AOT compile fail.
 - Don’t use functions in your providers, routes or declarations, export a function and then reference that function name
 - Inputs, Outputs, View or Content Child(ren), Hostbindings, and any field you use from the template or annotate for Angular should be public
 
-### Testing
-
-For unit tests, use `npm run test` for continuous testing in watch mode and use
-`npm run test:once` for single test. To view code coverage after running test, open `coverage/html/index.html` in your browser.
-
-For e2e tests, use `npm run e2e`. To run unit test and e2e test at the same time, use `npm run ci`.
 
 ### Wiki Links
 [Recommended Steps for merging this starter into existing project](https://github.com/qdouble/angular2webpack2-starter/wiki/Recommended-Steps-for-Merging-Starter-into-Existing-Project)

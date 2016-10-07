@@ -8,15 +8,13 @@ import 'ts-helpers';
 import {
   DEV_PORT, PROD_PORT, EXCLUDE_SOURCE_MAPS, HOST,
   USE_DEV_SERVER_PROXY, DEV_SERVER_PROXY_CONFIG, DEV_SERVER_WATCH_OPTIONS,
-  DEV_SOURCE_MAPS, PROD_SOURCE_MAPS, MY_COPY_FOLDERS, MY_VENDOR_DLLS,
+  DEV_SOURCE_MAPS, PROD_SOURCE_MAPS, MY_COPY_FOLDERS,
   MY_CLIENT_PLUGINS, MY_CLIENT_PRODUCTION_PLUGINS, MY_CLIENT_RULES
 } from './constants';
 
 const {
   ContextReplacementPlugin,
   DefinePlugin,
-  DllPlugin,
-  DllReferencePlugin,
   ProgressPlugin,
   NoErrorsPlugin
 } = require('webpack');
@@ -27,7 +25,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const NamedModulesPlugin = require('webpack/lib/NamedModulesPlugin');
 const UglifyJsPlugin = require('webpack/lib/optimize/UglifyJsPlugin');
 
-const { root, testDll } = require('./helpers.js');
+const { root } = require('./helpers.js');
 
 const EVENT = process.env.npm_lifecycle_event;
 const AOT = EVENT.includes('aot');
@@ -47,7 +45,6 @@ const PORT = port;
 console.log('PRODUCTION BUILD: ', PROD);
 console.log('AOT: ', AOT);
 if (DEV_SERVER) {
-  testDll();
   console.log(`Starting dev server on: http://${HOST}:${PORT}`);
 }
 
@@ -58,33 +55,18 @@ const CONSTANTS = {
   PORT: PORT
 };
 
-const DLL_VENDORS = [
-  '@angular/common',
-  '@angular/compiler',
-  '@angular/core',
-  '@angular/forms',
-  '@angular/http',
-  '@angular/platform-browser',
-  '@angular/platform-browser-dynamic',
-  '@angular/platform-server',
-  '@angular/router',
-  'rxjs',
-  ...MY_VENDOR_DLLS
-];
-
 const COPY_FOLDERS = [
   { from: 'src/assets', to: 'assets' },
+  { from: 'src/index.html' },
   ...MY_COPY_FOLDERS
 ];
 
-if (!DEV_SERVER) {
-  COPY_FOLDERS.unshift({ from: 'src/index.html' });
-} else {
-  COPY_FOLDERS.push({ from: 'dll' });
-}
 
 const clientConfig = function webpackConfig(): WebpackConfig {
   let config: WebpackConfig = Object.assign({});
+
+  config.cache = true;
+  PROD ? config.devtool = PROD_SOURCE_MAPS : config.devtool = DEV_SOURCE_MAPS;
 
   config.module = {
     rules: [
@@ -118,37 +100,17 @@ const clientConfig = function webpackConfig(): WebpackConfig {
     new ForkCheckerPlugin(),
     new DefinePlugin(CONSTANTS),
     new NamedModulesPlugin(),
+    new CopyWebpackPlugin(COPY_FOLDERS, { ignore: ['*dist_root/*'] }),
+    new CopyWebpackPlugin([{ from: 'src/assets/dist_root' }]),
     ...MY_CLIENT_PLUGINS
   ];
 
   if (DEV_SERVER) {
     config.plugins.push(
-      new DllReferencePlugin({
-        context: '.',
-        manifest: require(`./dll/polyfill-manifest.json`)
-      }),
-      new DllReferencePlugin({
-        context: '.',
-        manifest: require(`./dll/vendor-manifest.json`)
-      }),
       new HtmlWebpackPlugin({
         template: 'src/index.html',
         inject: false
       })
-    );
-  }
-
-  if (DLL) {
-    config.plugins.push(
-      new DllPlugin({
-        name: '[name]',
-        path: root('dll/[name]-manifest.json'),
-      })
-    );
-  } else {
-    config.plugins.push(
-      new CopyWebpackPlugin(COPY_FOLDERS, { ignore: ['*dist_root/*'] }),
-      new CopyWebpackPlugin([{ from: 'src/assets/dist_root' }])
     );
   }
 
@@ -163,53 +125,20 @@ const clientConfig = function webpackConfig(): WebpackConfig {
     );
   }
 
-  config.cache = true;
-  PROD ? config.devtool = PROD_SOURCE_MAPS : config.devtool = DEV_SOURCE_MAPS;
-
-  if (DLL) {
+  if (AOT) {
     config.entry = {
-      app_assets: ['./src/main.browser'],
-      polyfill: [
-        'sockjs-client',
-        'ts-helpers',
-        'zone.js',
-        'core-js/client/shim.js',
-        'core-js/es6/reflect.js',
-        'core-js/es7/reflect.js',
-        'querystring-es3',
-        'strip-ansi',
-        'url',
-        'punycode',
-        'events',
-        'webpack-dev-server/client/socket.js',
-        'webpack/hot/emitter.js',
-        'zone.js/dist/long-stack-trace-zone.js'
-      ],
-      vendor: [...DLL_VENDORS]
+      main: './src/main.browser.aot'
     };
   } else {
-    if (AOT) {
-        config.entry = {
-          main: './src/main.browser.aot'
-        };
-      } else {
-        config.entry = {
-          main: './src/main.browser'
-        };
-      }
-  }
-  if (!DLL) {
-    config.output = {
-      path: root('dist/client'),
-      filename: 'index.js'
-    };
-  } else {
-    config.output = {
-      path: root('dll'),
-      filename: '[name].dll.js',
-      library: '[name]'
+    config.entry = {
+      main: './src/main.browser'
     };
   }
+
+  config.output = {
+    path: root('dist/client'),
+    filename: 'index.js'
+  };
 
   config.devServer = {
     contentBase: AOT ? './src/compiled' : './src',
@@ -245,45 +174,6 @@ const clientConfig = function webpackConfig(): WebpackConfig {
 
 } ();
 
-DLL ? console.log('BUILDING DLLs') : console.log('BUILDING APP');
+console.log('BUILDING APP');
 module.exports = clientConfig;
 
-// // Types
-interface WebpackConfig {
-  cache?: boolean;
-  target?: string;
-  devtool?: string;
-  entry: any;
-  externals?: any;
-  output: any;
-  module?: any;
-  plugins?: Array<any>;
-  resolve?: {
-    extensions?: Array<string>;
-  };
-  devServer?: {
-    contentBase?: string;
-    port?: number;
-    historyApiFallback?: boolean;
-    hot?: boolean;
-    inline?: boolean;
-    proxy?: any;
-    host?: string;
-    quiet?: boolean;
-    noInfo?: boolean;
-    watchOptions?: any;
-  };
-  node?: {
-    process?: boolean;
-    global?: boolean;
-    Buffer?: boolean;
-    crypto?: boolean;
-    module?: boolean;
-    clearImmediate?: boolean;
-    setImmediate?: boolean
-    clearTimeout?: boolean;
-    setTimeout?: boolean;
-    __dirname?: boolean;
-    __filename?: boolean;
-  };
-}
